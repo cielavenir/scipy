@@ -225,6 +225,10 @@ def get_build_ext_override():
                     ext.extra_link_args = [arg for arg in ext.extra_link_args if not "version-script" in arg]
                     ext.extra_link_args.append('-Wl,--version-script=' + script_fn)
 
+            # Allow late configuration
+            hooks = getattr(ext, '_pre_build_hook', ())
+            _run_pre_build_hooks(hooks, (self, ext))
+
             old_build_ext.build_extension(self, ext)
 
         def __is_using_gnu_linker(self, ext):
@@ -250,6 +254,32 @@ def get_build_ext_override():
             return is_gcc and sysconfig.get_config_var('GNULD') == 'yes'
 
     return build_ext
+
+
+def get_build_clib_override():
+    """
+    Custom build_clib command to tweak library building.
+    """
+    from numpy.distutils.command.build_clib import build_clib as old_build_clib
+
+    class build_clib(old_build_clib):
+        def build_a_library(self, build_info, lib_name, libraries):
+            # Allow late configuration
+            hooks = build_info.get('_pre_build_hook', ())
+            _run_pre_build_hooks(hooks, (self, build_info))
+            old_build_clib.build_a_library(self, build_info, lib_name, libraries)
+
+    return build_clib
+
+
+def _run_pre_build_hooks(hooks, args):
+    """Call a sequence of pre-build hooks, if any"""
+    if hooks is None:
+        hooks = ()
+    elif not hasattr(hooks, '__iter__'):
+        hooks = (hooks,)
+    for hook in hooks:
+        hook(*args)
 
 
 def generate_cython():
@@ -479,6 +509,7 @@ def setup_package():
 
         # Customize extension building
         cmdclass['build_ext'] = get_build_ext_override()
+        cmdclass['build_clib'] = get_build_clib_override()
 
         cwd = os.path.abspath(os.path.dirname(__file__))
         if not os.path.exists(os.path.join(cwd, 'PKG-INFO')):
