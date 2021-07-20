@@ -201,6 +201,7 @@ def get_build_ext_override():
     from numpy.distutils.command.build_ext import build_ext as old_build_ext
 
     class build_ext(old_build_ext):
+        '''
         def finalize_options(self):
             super().finalize_options()
 
@@ -210,6 +211,7 @@ def get_build_ext_override():
                 print("NOTE: -j build option not supportd. Set NPY_NUM_BUILD_JOBS=4 "
                       "for parallel build.")
             self.parallel = None
+        '''
 
         def build_extension(self, ext):
             # When compiling with GNU compilers, use a version script to
