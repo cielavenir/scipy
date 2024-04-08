@@ -18,8 +18,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('transform')
 
     # qhull
-    qhull_src = sorted(glob.glob(join(dirname(__file__), 'qhull_src',
-                                    'src', '*.c')))
+    # qhull_src = sorted(glob.glob(join(dirname(__file__), 'qhull_src',
+    #                                 'src', '*.c')))
 
     inc_dirs = [get_python_inc()]
     if inc_dirs[0] != get_python_inc(plat_specific=1):
@@ -29,9 +29,11 @@ def configuration(parent_package='', top_path=None):
 
     cfg = dict(get_sys_info('lapack_opt'))
     cfg.setdefault('include_dirs', []).extend(inc_dirs)
+    cfg['libraries'].append('qhull_r')
     config.add_extension('qhull',
-                         sources=['qhull.c'] + qhull_src,
+                         sources=['qhull.c'],
                          **cfg)
+    del cfg
 
     # cKDTree
     ckdtree_src = ['query.cxx',
